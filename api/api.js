@@ -18,16 +18,25 @@ module.exports = async (req, res) => {
 
         if (req.method === "GET") {
             const { type, searchGame } = req.query;
+            
             if (searchGame) {
-                // Roblox API Proxy: Client-side CORS hatasını önler
-                const roblox = await axios.get(`https://games.roblox.com/v1/games/list?model.keyword=${encodeURIComponent(searchGame)}`);
-                return res.status(200).json(roblox.data.games || []);
+                try {
+                    // Özel karakterleri ([], +, space) temizleyerek Roblox'a sorar
+                    const rRes = await axios.get(`https://games.roblox.com/v1/games/list?model.keyword=${encodeURIComponent(searchGame)}`, { timeout: 4000 });
+                    return res.status(200).json(rRes.data.games || []);
+                } catch (e) {
+                    return res.status(200).json([]);
+                }
             }
+            
             const data = (type === "users") ? await usersColl.find({}).toArray() : await codesColl.find({}).sort({createdAt: -1}).toArray();
             return res.status(200).json(data);
         }
 
-        const body = req.body ? (typeof req.body === 'string' ? JSON.parse(req.body) : req.body) : {};
+        let body = {};
+        if (req.body) {
+            body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
+        }
 
         if (req.method === "POST") {
             await codesColl.insertOne({ ...body, createdAt: new Date() });
@@ -44,5 +53,7 @@ module.exports = async (req, res) => {
             await codesColl.deleteOne({ _id: new ObjectId(req.query.id) });
             return res.status(200).json({ msg: "Deleted" });
         }
-    } catch (e) { return res.status(500).json({ error: e.message }); }
+    } catch (e) {
+        return res.status(500).json({ error: e.message });
+    }
 };
