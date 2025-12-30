@@ -3,21 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TR-VOID | CodeShare</title>
+    <title>TR-VOID | v1.5.0</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         :root { --db: #1e1f22; --dc: #313338; --dt: #dbdee1; --dp: #5865F2; }
         body { background: var(--db); color: var(--dt); font-family: 'Inter', sans-serif; user-select: none; }
-        .sidebar { position: fixed; top: 0; right: -350px; width: 320px; height: 100%; background: var(--dc); z-index: 100; transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1); border-left: 1px solid rgba(0,0,0,0.2); }
+        .sidebar { position: fixed; top: 0; right: -350px; width: 320px; height: 100%; background: var(--dc); z-index: 100; transition: 0.4s ease; border-left: 1px solid rgba(0,0,0,0.2); }
         .sidebar.open { right: 0; }
         .status-Working { color: #23a55a; background: rgba(35, 165, 90, 0.1); }
         .status-Maintenance { color: #f0b232; background: rgba(240, 178, 50, 0.1); }
         .status-NotWorking { color: #f23f43; background: rgba(242, 63, 67, 0.1); }
+        .custom-scrollbar::-webkit-scrollbar { width: 5px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #444; border-radius: 10px; }
     </style>
 </head>
 <body>
-    <nav class="fixed top-0 w-full p-4 flex justify-between items-center z-50 px-8 bg-black/20 backdrop-blur-lg border-b border-white/5">
+    <nav class="fixed top-0 w-full p-4 flex justify-between items-center z-50 px-8 bg-black/30 backdrop-blur-md border-b border-white/5">
         <div class="font-black text-xl italic tracking-tighter">TR-VOID <span class="text-blue-500">.cc</span></div>
         <button onclick="toggleSidebar()" class="text-2xl">☰</button>
     </nav>
@@ -36,36 +38,42 @@
     </div>
 
     <main class="pt-32 px-6 max-w-6xl mx-auto pb-20">
-        <input type="text" id="srch" oninput="render()" class="w-full bg-black/20 p-5 rounded-2xl outline-none border border-white/5 mb-16" placeholder="Arama yap...">
+        <input type="text" id="srch" oninput="render()" class="w-full bg-black/20 p-5 rounded-2xl outline-none border border-white/5 mb-16" placeholder="Kayıtlı scriptlerde ara...">
         <div id="list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
     </main>
 
-    <div id="modal" class="fixed inset-0 bg-black/90 hidden z-[200] flex items-center justify-center p-4 backdrop-blur-md">
-        <div class="bg-[#2b2d31] w-full max-w-lg rounded-3xl p-8 border border-white/10">
-            <p class="text-[10px] font-bold opacity-40 mb-2 uppercase">1. Adım: Oyunu Bul ve Tıkla</p>
-            <input type="text" id="g-srch" oninput="searchRoblox(this.value)" class="w-full bg-black/20 p-4 rounded-xl mb-4 outline-none border border-white/5" placeholder="Oyun İsmi Girin (Arama)...">
+    <div id="modal" class="fixed inset-0 bg-black/95 hidden z-[200] flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-[#2b2d31] w-full max-w-lg rounded-[2.5rem] p-8 border border-white/10 shadow-2xl">
+            <h2 class="text-xs font-black mb-6 opacity-30 tracking-widest uppercase text-center">Script Yükleme Paneli</h2>
             
-            <div id="g-res" class="max-h-32 overflow-y-auto mb-4 space-y-1"></div>
+            <div class="relative mb-4">
+                <i class="fas fa-gamepad absolute left-4 top-1/2 -translate-y-1/2 opacity-20"></i>
+                <input type="text" id="g-srch" oninput="searchRoblox(this.value)" class="w-full bg-black/40 p-4 pl-12 rounded-2xl outline-none border border-white/5 focus:border-blue-500 transition-all" placeholder="Roblox Oyununu Buradan Ara...">
+            </div>
             
-            <div id="g-sel" class="hidden p-4 bg-blue-500/10 rounded-xl flex items-center gap-4 mb-4 border border-blue-500/20">
-                <img id="g-img" src="" class="w-12 h-12 rounded-lg">
-                <div class="flex flex-col">
-                    <p id="g-name" class="font-bold text-xs"></p>
+            <div id="g-res" class="max-h-40 overflow-y-auto mb-4 space-y-1 custom-scrollbar"></div>
+            
+            <div id="g-sel" class="hidden p-4 bg-blue-500/10 rounded-2xl flex items-center gap-4 mb-4 border border-blue-500/20 animate-pulse">
+                <img id="g-img" src="" class="w-14 h-14 rounded-xl shadow-lg border border-white/10">
+                <div class="flex-1 overflow-hidden">
+                    <p id="g-name" class="font-black text-[11px] uppercase truncate text-blue-400"></p>
                     <p id="g-id" class="text-[9px] opacity-40 font-mono"></p>
                 </div>
+                <i class="fas fa-check-circle text-blue-500"></i>
             </div>
 
-            <p class="text-[10px] font-bold opacity-40 mb-2 uppercase">2. Adım: Durum ve Kod</p>
-            <select id="s-stat" class="w-full bg-black/20 p-4 rounded-xl mb-4 outline-none border border-white/5 text-sm">
-                <option value="Working">✅ Working</option>
-                <option value="Maintenance">🛠️ Maintenance</option>
-                <option value="NotWorking">❌ Not Working</option>
-            </select>
-            <textarea id="s-con" class="w-full bg-black/20 p-4 rounded-xl h-32 mb-6 font-mono text-[10px] outline-none border border-white/5" placeholder="Script kodunu buraya yapıştır..."></textarea>
+            <div class="grid grid-cols-1 gap-4">
+                <select id="s-stat" class="w-full bg-black/20 p-4 rounded-xl outline-none border border-white/5 text-xs font-bold">
+                    <option value="Working">🟢 ÇALIŞIYOR (WORKING)</option>
+                    <option value="Maintenance">🟡 BAKIMDA (MAINTENANCE)</option>
+                    <option value="NotWorking">🔴 BOZUK (NOT WORKING)</option>
+                </select>
+                <textarea id="s-con" class="w-full bg-black/20 p-4 rounded-xl h-40 font-mono text-[10px] outline-none border border-white/5 focus:border-blue-500" placeholder="Script kodunu buraya yapıştır..."></textarea>
+            </div>
             
-            <div class="flex gap-3">
-                <button onclick="closeAdd()" class="flex-1 p-4 bg-white/5 rounded-xl font-bold">İPTAL</button>
-                <button onclick="save()" class="flex-1 bg-blue-600 rounded-xl font-black">KAYDET</button>
+            <div class="flex gap-3 mt-6">
+                <button onclick="closeAdd()" class="flex-1 p-4 bg-white/5 rounded-2xl font-bold hover:bg-white/10 transition-all text-xs">İPTAL</button>
+                <button onclick="save()" class="flex-1 bg-blue-600 hover:bg-blue-500 rounded-2xl font-black transition-all shadow-lg shadow-blue-500/20 text-xs">SİSTEME KAYDET</button>
             </div>
         </div>
     </div>
@@ -85,43 +93,57 @@
         function render() {
             const q = document.getElementById('srch').value.toLowerCase();
             document.getElementById('list').innerHTML = codes.filter(c => c.gameName.toLowerCase().includes(q)).map(c => `
-                <div class="bg-[#313338] p-5 rounded-[2rem] border border-white/5" onmousedown="pStart('${c._id}')" onmouseup="pEnd()" ontouchstart="pStart('${c._id}')" ontouchend="pEnd()">
+                <div class="bg-[#313338] p-5 rounded-[2rem] border border-white/5 relative group transition-all" onmousedown="pStart('${c._id}')" onmouseup="pEnd()" ontouchstart="pStart('${c._id}')" ontouchend="pEnd()">
                     <div class="flex gap-4 mb-4">
-                        <img src="${c.gameThumb}" class="w-16 h-16 rounded-2xl">
-                        <div class="flex-1">
-                            <h3 class="font-bold text-sm truncate">${c.gameName}</h3>
-                            <span class="text-[9px] font-bold px-2 py-0.5 rounded status-${c.status}">${c.status}</span>
+                        <img src="${c.gameThumb}" class="w-20 h-20 rounded-2xl shadow-xl">
+                        <div class="flex-1 overflow-hidden">
+                            <h3 class="font-black text-xs truncate uppercase tracking-tighter">${c.gameName}</h3>
+                            <div class="flex items-center gap-2 mt-2">
+                                <span class="text-[9px] font-black px-2 py-0.5 rounded status-${c.status}">${c.status}</span>
+                                <span class="text-[9px] opacity-30 font-mono">ID: ${c.gameId}</span>
+                            </div>
                         </div>
                     </div>
-                    <button onclick="copy('${encodeURIComponent(c.content)}', this)" class="w-full bg-white/5 p-3 rounded-xl text-[10px] font-bold">KOPYALA</button>
+                    <button onclick="copy('${encodeURIComponent(c.content)}', this)" class="w-full bg-white/5 p-3 rounded-xl text-[10px] font-black hover:bg-blue-600 transition-all">KODU KOPYALA</button>
                 </div>
             `).join('');
         }
 
         async function searchRoblox(q) {
-            if(q.length < 3) return;
-            const r = await fetch(`${api}?searchGame=${encodeURIComponent(q)}`);
-            const gs = await r.json();
-            document.getElementById('g-res').innerHTML = gs.map(g => `
-                <div onclick="setG('${g.name.replace(/'/g,"")}','${g.place_id}','${g.icon}')" class="p-3 bg-white/5 rounded-xl cursor-pointer text-[10px] font-bold hover:bg-blue-600 flex items-center gap-3 transition-all border border-white/5">
-                    <img src="${g.icon}" class="w-6 h-6 rounded"> ${g.name}
-                </div>
-            `).join('');
+            if(q.length < 3) { document.getElementById('g-res').innerHTML = ""; return; }
+            try {
+                const r = await fetch(`${api}?searchGame=${encodeURIComponent(q)}`);
+                const gs = await r.json();
+                document.getElementById('g-res').innerHTML = gs.map(g => `
+                    <div onclick="setG('${g.name.replace(/'/g,"")}','${g.place_id}','${g.icon}')" class="p-3 bg-white/5 rounded-xl cursor-pointer text-[10px] font-bold hover:bg-blue-600 flex items-center gap-3 transition-all border border-white/5">
+                        <img src="${g.icon}" class="w-8 h-8 rounded-lg"> 
+                        <div class="flex flex-col">
+                            <span>${g.name}</span>
+                            <span class="text-[8px] opacity-30">Place ID: ${g.place_id}</span>
+                        </div>
+                    </div>
+                `).join('');
+            } catch(e) { console.error("Arama yapılamadı."); }
         }
 
-        function setG(n,i,t) {
-            selGame = { gameName:n, gameId:i, gameThumb:t };
+        function setG(name, id, icon) {
+            selGame = { gameName: name, gameId: id, gameThumb: icon };
             document.getElementById('g-sel').classList.remove('hidden');
-            document.getElementById('g-name').innerText = n;
-            document.getElementById('g-id').innerText = "ID: " + i;
-            document.getElementById('g-img').src = t;
-            document.getElementById('g-res').innerHTML = ""; // Listeyi temizle
+            document.getElementById('g-name').innerText = name;
+            document.getElementById('g-id').innerText = "Seçili ID: " + id;
+            document.getElementById('g-img').src = icon;
+            document.getElementById('g-res').innerHTML = ""; // Listeyi kapat
+            document.getElementById('g-srch').value = ""; // Arama kutusunu temizle
         }
 
         async function save() {
-            if(!selGame) return alert("Önce bir oyun aramalı ve üzerine tıklayarak seçmelisiniz!");
-            const payload = { ...selGame, content: document.getElementById('s-con').value, status: document.getElementById('s-stat').value };
+            if(!selGame) return alert("Hata: Önce bir oyun arayıp sonuçlardan seçmelisin!");
+            const content = document.getElementById('s-con').value;
+            if(!content) return alert("Hata: Script kodunu girmedin!");
+            
+            const payload = { ...selGame, content, status: document.getElementById('s-stat').value };
             const method = selGame._id ? 'PUT' : 'POST';
+            
             await fetch(api, { method, body: JSON.stringify(payload), headers: {'Content-Type': 'application/json'} });
             location.reload();
         }
@@ -131,11 +153,15 @@
 
         async function admAct(id) {
             const c = codes.find(x => x._id === id);
-            if(confirm(`Düzenle: ${c.gameName}`)) {
-                selGame = c; document.getElementById('s-con').value = c.content; document.getElementById('s-stat').value = c.status;
-                setG(c.gameName, c.gameId, c.gameThumb); showAdd();
-            } else if(confirm("Silinsin mi?")) {
-                await fetch(`${api}?id=${id}`, { method: 'DELETE' }); location.reload();
+            if(confirm(`"${c.gameName}" Scriptini Düzenle? (Vazgeç dersen SİLME menüsü gelir)`)) {
+                selGame = c;
+                document.getElementById('s-con').value = c.content;
+                document.getElementById('s-stat').value = c.status;
+                setG(c.gameName, c.gameId, c.gameThumb);
+                showAdd();
+            } else if(confirm("Bu scripti tamamen silmek istediğine emin misin?")) {
+                await fetch(`${api}?id=${id}`, { method: 'DELETE' });
+                location.reload();
             }
         }
 
@@ -144,13 +170,18 @@
             const us = await r.json();
             const u = us.find(x => x.username === document.getElementById('u').value && x.password === document.getElementById('p').value);
             if(u) { sessionStorage.setItem('tr_void_user', JSON.stringify(u)); location.reload(); }
-            else alert("Hata!");
+            else alert("Hata: Giriş başarısız.");
         }
 
         function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); }
         function showAdd() { document.getElementById('modal').classList.remove('hidden'); }
-        function closeAdd() { document.getElementById('modal').classList.add('hidden'); selGame = null; }
-        function copy(c, b) { navigator.clipboard.writeText(decodeURIComponent(c)); b.innerText = "KOPYALANDI!"; setTimeout(() => b.innerText = "KOPYALA", 2000); }
+        function closeAdd() { document.getElementById('modal').classList.add('hidden'); selGame = null; document.getElementById('g-sel').classList.add('hidden'); }
+        function logout() { sessionStorage.clear(); location.reload(); }
+        function copy(c, b) { 
+            navigator.clipboard.writeText(decodeURIComponent(c)); 
+            const old = b.innerText; b.innerText = "KOPYALANDI!"; 
+            setTimeout(() => b.innerText = old, 2000); 
+        }
 
         load();
     </script>
