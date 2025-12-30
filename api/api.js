@@ -1,57 +1,83 @@
 const { MongoClient, ObjectId } = require("mongodb");
 const axios = require("axios");
 
-const uri = process.env.MONGODB_URI;
-const client = new MongoClient(uri);
+const client = new MongoClient(process.env.MONGODB_URI);
 
 module.exports = async (req, res) => {
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-    if (req.method === 'OPTIONS') return res.status(200).end();
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.setHeader("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS");
+    res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+    if (req.method === "OPTIONS") return res.status(200).end();
 
     try {
         await client.connect();
         const db = client.db("hasanbrawl54_db_user");
-        const codesColl = db.collection("codes");
-        const usersColl = db.collection("users");
+        const codes = db.collection("codes");
+        const users = db.collection("users");
 
-        if (req.method === "GET") {
-            const { type, searchGame } = req.query;
-            
-            if (searchGame) {
-                try {
-                    // Roblox modern arama API'sini kullanır, özel karakterleri güvenli hale getirir
-                    const response = await axios.get(`https://games.roblox.com/v1/games/list?model.keyword=${encodeURIComponent(searchGame)}`, { timeout: 5000 });
-                    return res.status(200).json(response.data.games || []);
-                } catch (apiErr) {
-                    console.error("Roblox API hatası:", apiErr.message);
-                    return res.status(200).json([]);
-                }
+        /* ROBLOX OYUN ARAMA */
+        if (req.method === "GET" && req.query.searchGame) {
+            const q = req.query.searchGame;
+
+            const search = await axios.get(
+                `https://games.roblox.com/v1/games/search?keyword=${encodeURIComponent(q)}&limit=10`
+            );
+
+            const games = search.data.data || [];
+            const ids = games.map(g => g.rootPlaceId).join(",");
+
+            let thumbs = {};
+            if (ids) {
+                const t = await axios.get(
+                    `https://thumbnails.roblox.com/v1/places/gameicons?placeIds=${ids}&size=150x150&format=Png`
+                );
+                t.data.data.forEach(i => thumbs[i.targetId] = i.imageUrl);
             }
-            
-            const data = (type === "users") ? await usersColl.find({}).toArray() : await codesColl.find({}).sort({createdAt: -1}).toArray();
-            return res.status(200).json(data);
+
+            return res.json(
+                games.map(g => ({
+                    name: g.name,
+                    placeId: g.rootPlaceId,
+                    image: thumbs[g.rootPlaceId] || ""
+                }))
+            );
         }
 
-        const body = req.body ? (typeof req.body === 'string' ? JSON.parse(req.body) : req.body) : {};
+        /* GET */
+        if (req.method === "GET") {
+            if (req.query.type === "users")
+                return res.json(await users.find({}).toArray());
 
+            return res.json(
+                await codes.find({}).sort({ createdAt: -1 }).toArray()
+            );
+        }
+
+        const body = typeof req.body === "string" ? JSON.parse(req.body) : req.body;
+
+        /* POST */
         if (req.method === "POST") {
-            await codesColl.insertOne({ ...body, createdAt: new Date() });
-            return res.status(201).json({ msg: "Success" });
+            await codes.insertOne({ ...body, createdAt: new Date() });
+            return res.json({ ok: true });
         }
 
+        /* PUT */
         if (req.method === "PUT") {
-            const { _id, ...updateData } = body;
-            await codesColl.updateOne({ _id: new ObjectId(_id) }, { $set: updateData });
-            return res.status(200).json({ msg: "Updated" });
+            const { _id, ...rest } = body;
+            await codes.updateOne(
+                { _id: new ObjectId(_id) },
+                { $set: rest }
+            );
+            return res.json({ ok: true });
         }
 
+        /* DELETE */
         if (req.method === "DELETE") {
-            await codesColl.deleteOne({ _id: new ObjectId(req.query.id) });
-            return res.status(200).json({ msg: "Deleted" });
+            await codes.deleteOne({ _id: new ObjectId(req.query.id) });
+            return res.json({ ok: true });
         }
+
     } catch (e) {
-        return res.status(500).json({ error: "Sunucu hatası: " + e.message });
+        res.status(500).json({ error: e.message });
     }
 };
