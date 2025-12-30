@@ -1,7 +1,7 @@
 const { MongoClient, ObjectId } = require("mongodb");
 const axios = require("axios");
 
-const uri = process.env.MONGODB_URI; 
+const uri = process.env.MONGODB_URI;
 const client = new MongoClient(uri);
 
 module.exports = async (req, res) => {
@@ -16,26 +16,25 @@ module.exports = async (req, res) => {
         const codesColl = db.collection("codes");
         const usersColl = db.collection("users");
 
-        // Roblox API Arama (Proxy)
-        if (req.method === "GET" && req.query.searchGame) {
-            const response = await axios.get(`https://games.roblox.com/v1/games/list?model.keyword=${req.query.searchGame}`);
-            return res.status(200).json(response.data.games || []);
-        }
-
         if (req.method === "GET") {
-            const { type } = req.query;
+            const { type, searchGame } = req.query;
+            if (searchGame) {
+                // Roblox API Proxy: Client-side CORS hatasını önler
+                const roblox = await axios.get(`https://games.roblox.com/v1/games/list?model.keyword=${encodeURIComponent(searchGame)}`);
+                return res.status(200).json(roblox.data.games || []);
+            }
             const data = (type === "users") ? await usersColl.find({}).toArray() : await codesColl.find({}).sort({createdAt: -1}).toArray();
             return res.status(200).json(data);
         }
 
+        const body = req.body ? (typeof req.body === 'string' ? JSON.parse(req.body) : req.body) : {};
+
         if (req.method === "POST") {
-            const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
             await codesColl.insertOne({ ...body, createdAt: new Date() });
             return res.status(201).json({ msg: "Success" });
         }
 
         if (req.method === "PUT") {
-            const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
             const { _id, ...updateData } = body;
             await codesColl.updateOne({ _id: new ObjectId(_id) }, { $set: updateData });
             return res.status(200).json({ msg: "Updated" });
