@@ -15,7 +15,7 @@ module.exports = async (req, res) => {
         const codes = db.collection("codes");
         const users = db.collection("users");
 
-        /* ROBLOX OYUN ARAMA */
+        /* ROBLOX GAME SEARCH */
         if (req.method === "GET" && req.query.searchGame) {
             const q = req.query.searchGame;
 
@@ -53,7 +53,9 @@ module.exports = async (req, res) => {
             );
         }
 
-        const body = typeof req.body === "string" ? JSON.parse(req.body) : req.body;
+        const body = typeof req.body === "string"
+            ? JSON.parse(req.body)
+            : req.body;
 
         /* POST */
         if (req.method === "POST") {
@@ -78,6 +80,6 @@ module.exports = async (req, res) => {
         }
 
     } catch (e) {
-        res.status(500).json({ error: e.message });
+        return res.status(500).json({ error: e.message });
     }
 };
