@@ -20,7 +20,7 @@ module.exports = async (req, res) => {
             const { type, searchGame } = req.query;
             if (searchGame) {
                 try {
-                    const r = await axios.get(`https://roblox-game-search.onrender.com/search?query=${encodeURIComponent(searchGame)}&limit=5`, { timeout: 6000 });
+                    const r = await axios.get(`https://roblox-game-search.onrender.com/search?query=${encodeURIComponent(searchGame)}&limit=5`, { timeout: 8000 });
                     return res.status(200).json(r.data.games || []);
                 } catch (e) { return res.status(200).json([]); }
             }
