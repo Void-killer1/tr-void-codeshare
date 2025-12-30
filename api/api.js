@@ -21,10 +21,11 @@ module.exports = async (req, res) => {
             
             if (searchGame) {
                 try {
-                    // Özel karakterleri ([], +, space) temizleyerek Roblox'a sorar
-                    const rRes = await axios.get(`https://games.roblox.com/v1/games/list?model.keyword=${encodeURIComponent(searchGame)}`, { timeout: 4000 });
-                    return res.status(200).json(rRes.data.games || []);
-                } catch (e) {
+                    // Roblox modern arama API'sini kullanır, özel karakterleri güvenli hale getirir
+                    const response = await axios.get(`https://games.roblox.com/v1/games/list?model.keyword=${encodeURIComponent(searchGame)}`, { timeout: 5000 });
+                    return res.status(200).json(response.data.games || []);
+                } catch (apiErr) {
+                    console.error("Roblox API hatası:", apiErr.message);
                     return res.status(200).json([]);
                 }
             }
@@ -33,10 +34,7 @@ module.exports = async (req, res) => {
             return res.status(200).json(data);
         }
 
-        let body = {};
-        if (req.body) {
-            body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
-        }
+        const body = req.body ? (typeof req.body === 'string' ? JSON.parse(req.body) : req.body) : {};
 
         if (req.method === "POST") {
             await codesColl.insertOne({ ...body, createdAt: new Date() });
@@ -54,6 +52,6 @@ module.exports = async (req, res) => {
             return res.status(200).json({ msg: "Deleted" });
         }
     } catch (e) {
-        return res.status(500).json({ error: e.message });
+        return res.status(500).json({ error: "Sunucu hatası: " + e.message });
     }
 };
