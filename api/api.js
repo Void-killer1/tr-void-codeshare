@@ -1,69 +1,54 @@
-const { MongoClient } = require("mongodb");
+const { MongoClient, ObjectId } = require("mongodb");
 const axios = require("axios");
 
-const client = new MongoClient(process.env.MONGODB_URI);
+const uri = process.env.MONGODB_URI;
+const client = new MongoClient(uri);
 
 module.exports = async (req, res) => {
-    res.setHeader("Access-Control-Allow-Origin","*");
-    res.setHeader("Access-Control-Allow-Methods","GET,POST,PUT,DELETE,OPTIONS");
-    res.setHeader("Access-Control-Allow-Headers","Content-Type");
-    if(req.method==="OPTIONS") return res.status(200).end();
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    if (req.method === 'OPTIONS') return res.status(200).end();
 
-    try{
+    try {
         await client.connect();
-        const db = client.db("codeshare_db");
-        const codes = db.collection("codes");
+        const db = client.db("hasanbrawl54_db_user");
+        const codesColl = db.collection("codes");
+        const usersColl = db.collection("users");
 
-        /* RANDOM GAMES */
-        if(req.method==="GET" && req.query.randomGames){
-            const r = await axios.get("https://games.roblox.com/v1/games?sortOrder=Asc&limit=10");
-            const games = r.data.data || [];
-            const thumbs = {};
-            const ids = games.map(g=>g.rootPlaceId).join(",");
-            if(ids){
-                const t = await axios.get(`https://thumbnails.roblox.com/v1/places/gameicons?placeIds=${ids}&size=150x150&format=Png`);
-                t.data.data.forEach(i=> thumbs[i.targetId]=i.imageUrl );
+        if (req.method === "GET") {
+            const { type, searchGame } = req.query;
+            
+            // SENİN RENDER API'Nİ KULLANAN KISIM
+            if (searchGame) {
+                try {
+                    const renderUrl = `https://roblox-game-search.onrender.com/search?query=${encodeURIComponent(searchGame)}&limit=5`;
+                    const response = await axios.get(renderUrl, { timeout: 7000 });
+                    return res.status(200).json(response.data.games || []);
+                } catch (err) {
+                    return res.status(200).json([]);
+                }
             }
-            const formatted = games.map(g=>({
-                name:g.name,
-                universeId:g.id || g.universeId || 0,
-                thumbnail: thumbs[g.rootPlaceId]||"",
-                creatorName:g.creator?.name||"",
-                playing:g.playing||0
-            }));
-            return res.json(formatted);
+            const data = (type === "users") ? await usersColl.find({}).toArray() : await codesColl.find({}).sort({createdAt: -1}).toArray();
+            return res.status(200).json(data);
         }
 
-        /* ROBLOX SEARCH */
-        if(req.method==="GET" && req.query.searchGame){
-            const q = req.query.searchGame;
-            const search = await axios.get(`https://games.roblox.com/v1/games/search?keyword=${encodeURIComponent(q)}&limit=10`);
-            const games = search.data.searchResults.map(g=>g.contents[0]);
-            const thumbs = {};
-            const ids = games.map(g=>g.rootPlaceId).join(",");
-            if(ids){
-                const t = await axios.get(`https://thumbnails.roblox.com/v1/places/gameicons?placeIds=${ids}&size=150x150&format=Png`);
-                t.data.data.forEach(i=> thumbs[i.targetId]=i.imageUrl );
-            }
-            const formatted = games.map(g=>({
-                name:g.name,
-                universeId:g.universeId,
-                image: thumbs[g.rootPlaceId]||"",
-                creatorName:g.creatorName||"",
-                playing:g.playerCount||0
-            }));
-            return res.json(formatted);
+        let body = req.body ? (typeof req.body === 'string' ? JSON.parse(req.body) : req.body) : {};
+
+        if (req.method === "POST") {
+            await codesColl.insertOne({ ...body, createdAt: new Date() });
+            return res.status(201).json({ msg: "Success" });
         }
-
-        /* GET CODES */
-        if(req.method==="GET") return res.json(await codes.find({}).sort({createdAt:-1}).toArray());
-
-        /* POST */
-        if(req.method==="POST"){
-            const body = typeof req.body==="string"? JSON.parse(req.body) : req.body;
-            await codes.insertOne({...body, createdAt:new Date()});
-            return res.json({ok:true});
+        if (req.method === "PUT") {
+            const { _id, ...updateData } = body;
+            await codesColl.updateOne({ _id: new ObjectId(_id) }, { $set: updateData });
+            return res.status(200).json({ msg: "Updated" });
         }
-
-    }catch(e){ console.error(e); return res.status(500).json({error:e.message}); }
+        if (req.method === "DELETE") {
+            await codesColl.deleteOne({ _id: new ObjectId(req.query.id) });
+            return res.status(200).json({ msg: "Deleted" });
+        }
+    } catch (e) {
+        return res.status(500).json({ error: e.message });
+    }
 };
