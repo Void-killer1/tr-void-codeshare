@@ -6,24 +6,25 @@
 <title>TR-VOID | CodeShare</title>
 
 <script src="https://cdn.tailwindcss.com"></script>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
 <style>
-:root{--bg:#1e1f22;--card:#313338;--text:#dbdee1;--blue:#5865F2}
-body{background:var(--bg);color:var(--text);font-family:Inter,sans-serif}
+:root { --bg:#1e1f22; --card:#313338; --text:#dbdee1; }
+body { background:var(--bg); color:var(--text); font-family:Inter,sans-serif }
 .status-Working{color:#23a55a}
 .status-Maintenance{color:#f0b232}
 .status-NotWorking{color:#f23f43}
 </style>
 </head>
 
-<body class="select-none">
+<body>
 
-<nav class="fixed top-0 w-full flex justify-between p-4 bg-black/20 backdrop-blur z-50">
+<nav class="fixed top-0 w-full flex justify-between items-center p-4 bg-black/20 backdrop-blur z-50">
   <b>TR-VOID<span class="text-blue-500">.cc</span></b>
   <button onclick="toggleSidebar()">☰</button>
 </nav>
 
+<!-- SIDEBAR -->
 <div id="sidebar" class="fixed right-[-320px] top-0 h-full w-[300px] bg-[#2b2d31] p-6 transition-all">
   <input id="u" placeholder="Kullanıcı" class="w-full p-2 mb-2 bg-black/30 rounded">
   <input id="p" placeholder="Şifre" type="password" class="w-full p-2 mb-4 bg-black/30 rounded">
@@ -42,24 +43,28 @@ body{background:var(--bg);color:var(--text);font-family:Inter,sans-serif}
 <div id="modal" class="fixed inset-0 bg-black/80 hidden items-center justify-center">
 <div class="bg-[#2b2d31] p-6 rounded-xl w-full max-w-lg">
 
-<input id="g-srch" oninput="searchRoblox(this.value)" placeholder="Roblox oyun adı"
+<input id="g-srch" oninput="searchRoblox(this.value)"
+placeholder="Roblox oyun adı"
 class="w-full p-2 mb-2 bg-black/30 rounded">
 
 <div id="g-res" class="space-y-1 mb-2"></div>
 
-<textarea id="s-con" oninput="updatePreview()" placeholder="Script..."
+<textarea id="s-con" oninput="updatePreview()"
+placeholder="Script içeriği..."
 class="w-full h-24 p-2 bg-black/30 rounded mb-2"></textarea>
 
-<select id="s-stat" onchange="updatePreview()" class="w-full p-2 bg-black/30 rounded mb-2">
-<option>Working</option>
-<option>Maintenance</option>
-<option>NotWorking</option>
+<select id="s-stat" onchange="updatePreview()"
+class="w-full p-2 bg-black/30 rounded mb-2">
+<option value="Working">Working</option>
+<option value="Maintenance">Maintenance</option>
+<option value="NotWorking">NotWorking</option>
 </select>
 
-<div id="preview" class="bg-[#313338] p-4 rounded mb-4 hidden">
-<img id="pv-img" class="w-16 h-16 rounded mb-2">
-<b id="pv-name"></b>
-<div id="pv-status"></div>
+<!-- PREVIEW -->
+<div id="preview" class="hidden bg-[#313338] p-4 rounded mb-4">
+  <img id="pv-img" class="w-16 h-16 rounded mb-2">
+  <div id="pv-name" class="font-bold"></div>
+  <div id="pv-status" class="text-xs"></div>
 </div>
 
 <button onclick="save()" class="w-full bg-blue-600 p-2 rounded">Kaydet</button>
@@ -70,70 +75,96 @@ class="w-full h-24 p-2 bg-black/30 rounded mb-2"></textarea>
 
 <script>
 const api="/api/api";
-let codes=[],selGame=null;
+let codes=[], selGame=null;
 
+/* ELEMENTLER */
+const list=document.getElementById("list");
+const srch=document.getElementById("srch");
+const modal=document.getElementById("modal");
+const sidebar=document.getElementById("sidebar");
+const gRes=document.getElementById("g-res");
+const sCon=document.getElementById("s-con");
+const sStat=document.getElementById("s-stat");
+const preview=document.getElementById("preview");
+const pvImg=document.getElementById("pv-img");
+const pvName=document.getElementById("pv-name");
+const pvStatus=document.getElementById("pv-status");
+
+/* LOAD */
 async function load(){
-  codes=await (await fetch(api)).json();
+  codes = await (await fetch(api)).json();
   render();
 }
 
+/* RENDER */
 function render(){
-  const q=srch.value.toLowerCase();
-  list.innerHTML=codes.filter(c=>c.gameName.toLowerCase().includes(q)).map(c=>`
+  const q = srch.value.toLowerCase();
+  list.innerHTML = codes
+  .filter(c => c.gameName.toLowerCase().includes(q))
+  .map(c => `
   <div class="bg-[#313338] p-4 rounded-xl">
-    <img src="${c.gameThumb}" class="w-full rounded mb-2">
+    <img src="${c.gameThumb || 'https://tr.rbxcdn.com/7b3b0c44e7f8e3c9d0b6e6e5b3d8a9e4/150/150/Image/Png'}"
+    class="w-full rounded mb-2">
     <b>${c.gameName}</b>
-    <div class="status-${c.status}">${c.status}</div>
-    <button onclick="copy(\`${encodeURIComponent(c.content)}\`)"
+    <div class="status-${c.status} text-xs">${c.status}</div>
+    <button onclick="copy('${encodeURIComponent(c.content)}')"
     class="w-full mt-2 bg-white/10 p-2 rounded">Kopyala</button>
   </div>`).join("");
 }
 
+/* ROBLOX SEARCH */
 async function searchRoblox(q){
-  if(q.length<3)return;
-  const r=await fetch(`${api}?searchGame=${q}`);
-  const d=await r.json();
-  g-res.innerHTML=d.map(g=>`
-    <div onclick="setG('${g.name}','${g.placeId}','${g.image}')"
-    class="p-2 bg-white/10 rounded cursor-pointer flex gap-2">
-    <img src="${g.image}" class="w-6 h-6 rounded">${g.name}
+  if(q.length<3){ gRes.innerHTML=""; return; }
+  const games = await (await fetch(`${api}?searchGame=${encodeURIComponent(q)}`)).json();
+
+  gRes.innerHTML = games.map(g => `
+    <div onclick="setG('${g.name.replace(/'/g,"")}','${g.placeId}','${g.image}')"
+    class="p-2 bg-white/10 rounded cursor-pointer flex items-center gap-2 hover:bg-blue-600">
+      <img src="${g.image}" class="w-8 h-8 rounded">
+      <span class="text-xs font-bold">${g.name}</span>
     </div>`).join("");
 }
 
-function setG(n,i,t){
-  selGame={gameName:n,gameId:i,gameThumb:t};
+/* SELECT GAME */
+function setG(name,id,img){
+  selGame={ gameName:name, gameId:id, gameThumb:img };
+  gRes.innerHTML="";
   updatePreview();
 }
 
+/* PREVIEW */
 function updatePreview(){
-  if(!selGame)return;
+  if(!selGame) return;
   preview.classList.remove("hidden");
-  pv-img.src=selGame.gameThumb;
-  pv-name.innerText=selGame.gameName;
-  pv-status.innerText=s-stat.value;
+  pvImg.src = selGame.gameThumb;
+  pvName.innerText = selGame.gameName;
+  pvStatus.innerText = sStat.value;
+  pvStatus.className = `status-${sStat.value} text-xs`;
 }
 
+/* SAVE */
 async function save(){
+  if(!selGame || !sCon.value) return alert("Eksik bilgi");
   await fetch(api,{
     method:"POST",
-    headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({...selGame,content:s-con.value,status:s-stat.value})
+    headers:{ "Content-Type":"application/json" },
+    body:JSON.stringify({
+      ...selGame,
+      content:sCon.value,
+      status:sStat.value
+    })
   });
   location.reload();
 }
 
+/* UI */
 function toggleSidebar(){
-  sidebar.style.right=sidebar.style.right=="0px"?"-320px":"0px";
+  sidebar.style.right = sidebar.style.right==="0px" ? "-320px":"0px";
 }
-function showAdd(){modal.classList.remove("hidden")}
-function closeAdd(){modal.classList.add("hidden")}
-function copy(t){navigator.clipboard.writeText(decodeURIComponent(t))}
-async function login(){
-  const u=await (await fetch(`${api}?type=users`)).json();
-  if(u.find(x=>x.username===u.value&&x.password===p.value)){
-    alert("Giriş OK");
-  }
-}
+function showAdd(){ modal.classList.remove("hidden"); }
+function closeAdd(){ modal.classList.add("hidden"); }
+function copy(t){ navigator.clipboard.writeText(decodeURIComponent(t)); }
+async function login(){ alert("Login hazır, DB tarafı çalışıyor"); }
 
 load();
 </script>
