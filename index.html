@@ -4,10 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>TR-VOID | CodeShare</title>
-
 <script src="https://cdn.tailwindcss.com"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-
 <style>
 :root { --bg:#1e1f22; --card:#313338; --text:#dbdee1; }
 body { background:var(--bg); color:var(--text); font-family:Inter,sans-serif }
@@ -44,7 +42,7 @@ body { background:var(--bg); color:var(--text); font-family:Inter,sans-serif }
 <div class="bg-[#2b2d31] p-6 rounded-xl w-full max-w-lg">
 
 <input id="g-srch" oninput="searchRoblox(this.value)"
-placeholder="Oyun/Model ara..."
+placeholder="Roblox oyun adı"
 class="w-full p-2 mb-2 bg-black/30 rounded">
 
 <div id="g-res" class="space-y-1 mb-2"></div>
@@ -92,11 +90,7 @@ const pvStatus=document.getElementById("pv-status");
 
 /* LOAD */
 async function load(){
-  try {
-    codes = await (await fetch(api)).json();
-  } catch(e){
-    alert("API Hatası: "+e.message);
-  }
+  codes = await (await fetch(api)).json();
   render();
 }
 
@@ -104,12 +98,12 @@ async function load(){
 function render(){
   const q = srch.value.toLowerCase();
   list.innerHTML = codes
-  .filter(c => c.gameName.toLowerCase().includes(q))
+  .filter(c => c.game.toLowerCase().includes(q))
   .map(c => `
   <div class="bg-[#313338] p-4 rounded-xl">
     <img src="${c.gameThumb || 'https://tr.rbxcdn.com/7b3b0c44e7f8e3c9d0b6e6e5b3d8a9e4/150/150/Image/Png'}"
     class="w-full rounded mb-2">
-    <b>${c.gameName}</b>
+    <b>${c.game}</b>
     <div class="status-${c.status} text-xs">${c.status}</div>
     <button onclick="copy('${encodeURIComponent(c.content)}')"
     class="w-full mt-2 bg-white/10 p-2 rounded">Kopyala</button>
@@ -120,13 +114,23 @@ function render(){
 async function searchRoblox(q){
   if(q.length<3){ gRes.innerHTML=""; return; }
   try {
-    const games = await (await fetch(`${api}?searchGame=${encodeURIComponent(q)}`)).json();
+    const res = await fetch(`${api}?searchGame=${encodeURIComponent(q)}`);
+    const data = await res.json();
+
+    // API’den gelen objeyi array haline getir
+    const games = (data.searchResults || []).flatMap(group => 
+      group.contents.map(g => ({
+        gameName: g.name,
+        rootPlaceId: g.rootPlaceId,
+        gameThumb: g.image || 'https://tr.rbxcdn.com/7b3b0c44e7f8e3c9d0b6e6e5b3d8a9e4/150/150/Image/Png'
+      }))
+    );
 
     gRes.innerHTML = games.map(g => `
-      <div onclick="setG('${g.name.replace(/'/g,"")}','${g.rootPlaceId}','https://tr.rbxcdn.com/${g.rootPlaceId}/150/150/Image/Png')"
+      <div onclick="setG('${g.gameName.replace(/'/g,"")}','${g.rootPlaceId}','${g.gameThumb}')"
       class="p-2 bg-white/10 rounded cursor-pointer flex items-center gap-2 hover:bg-blue-600">
-        <img src="https://tr.rbxcdn.com/${g.rootPlaceId}/150/150/Image/Png" class="w-8 h-8 rounded">
-        <span class="text-xs font-bold">${g.name}</span>
+        <img src="${g.gameThumb}" class="w-8 h-8 rounded">
+        <span class="text-xs font-bold">${g.gameName}</span>
       </div>`).join("");
 
   } catch(e){
@@ -136,7 +140,7 @@ async function searchRoblox(q){
 
 /* SELECT GAME */
 function setG(name,id,img){
-  selGame={ gameName:name, gameId:id, gameThumb:img };
+  selGame={ gameName:name, rootPlaceId:id, gameThumb:img };
   gRes.innerHTML="";
   updatePreview();
 }
