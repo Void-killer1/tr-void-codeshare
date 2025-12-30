@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TR-VOID | v1.5.0</title>
+    <title>TR-VOID | v1.6.0</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
@@ -14,8 +14,8 @@
         .status-Working { color: #23a55a; background: rgba(35, 165, 90, 0.1); }
         .status-Maintenance { color: #f0b232; background: rgba(240, 178, 50, 0.1); }
         .status-NotWorking { color: #f23f43; background: rgba(242, 63, 67, 0.1); }
-        .custom-scrollbar::-webkit-scrollbar { width: 5px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #444; border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #555; border-radius: 10px; }
     </style>
 </head>
 <body>
@@ -25,14 +25,14 @@
     </nav>
 
     <div class="sidebar p-6 pt-10" id="sidebar">
-        <button onclick="toggleSidebar()" class="mb-10 text-[10px] font-black opacity-40 hover:opacity-100 flex items-center gap-2 uppercase tracking-widest"><i class="fas fa-arrow-right"></i> GERİ DÖN</button>
+        <button onclick="toggleSidebar()" class="mb-10 text-[10px] font-black opacity-40 hover:opacity-100 uppercase tracking-widest"><i class="fas fa-arrow-right"></i> GERİ DÖN</button>
         <div id="login-sec">
             <input type="text" id="u" class="w-full bg-black/20 p-4 rounded-xl mb-2 outline-none border border-white/5" placeholder="Kullanıcı">
             <input type="password" id="p" class="w-full bg-black/20 p-4 rounded-xl mb-4 outline-none border border-white/5" placeholder="Şifre">
             <button onclick="login()" class="w-full bg-[#5865F2] p-4 rounded-xl font-bold">Giriş Yap</button>
         </div>
         <div id="admin-sec" class="hidden space-y-4">
-            <button onclick="showAdd()" class="w-full p-4 bg-blue-500/10 text-blue-500 rounded-xl font-bold border border-blue-500/20">SCRIPT EKLE</button>
+            <button onclick="showAdd()" class="w-full p-4 bg-blue-500/10 text-blue-500 rounded-xl font-bold border border-blue-500/20 shadow-lg shadow-blue-500/5">SCRIPT EKLE</button>
             <button onclick="logout()" class="w-full p-2 text-red-500 text-[10px] font-bold opacity-30 mt-20">LOGOUT</button>
         </div>
     </div>
@@ -44,42 +44,46 @@
 
     <div id="modal" class="fixed inset-0 bg-black/95 hidden z-[200] flex items-center justify-center p-4 backdrop-blur-sm">
         <div class="bg-[#2b2d31] w-full max-w-lg rounded-[2.5rem] p-8 border border-white/10 shadow-2xl">
-            <h2 class="text-xs font-black mb-6 opacity-30 tracking-widest uppercase text-center">Script Yükleme Paneli</h2>
-            
-            <div class="relative mb-4">
-                <i class="fas fa-gamepad absolute left-4 top-1/2 -translate-y-1/2 opacity-20"></i>
-                <input type="text" id="g-srch" oninput="searchRoblox(this.value)" class="w-full bg-black/40 p-4 pl-12 rounded-2xl outline-none border border-white/5 focus:border-blue-500 transition-all" placeholder="Roblox Oyununu Buradan Ara...">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xs font-black opacity-30 tracking-widest uppercase">Script Yönetimi</h2>
+                <button onclick="toggleManual()" id="manual-btn" class="text-[9px] bg-blue-600/20 text-blue-400 px-3 py-1 rounded-full font-bold border border-blue-600/30">MANUEL GİRİŞ: KAPALI</button>
             </div>
             
-            <div id="g-res" class="max-h-40 overflow-y-auto mb-4 space-y-1 custom-scrollbar"></div>
+            <div id="search-box">
+                <input type="text" id="g-srch" oninput="searchRoblox(this.value)" class="w-full bg-black/40 p-4 rounded-2xl outline-none border border-white/5 mb-4" placeholder="Roblox Oyununu Ara...">
+                <div id="g-res" class="max-h-32 overflow-y-auto mb-4 space-y-1 custom-scrollbar"></div>
+            </div>
+
+            <div id="manual-box" class="hidden space-y-3 mb-4">
+                <input type="text" id="m-name" class="w-full bg-black/40 p-4 rounded-xl outline-none border border-white/5 text-sm" placeholder="Oyun İsmi (Örn: Prison Life)">
+                <input type="text" id="m-url" class="w-full bg-black/40 p-4 rounded-xl outline-none border border-white/5 text-sm" placeholder="Görsel URL (İkon)">
+            </div>
             
-            <div id="g-sel" class="hidden p-4 bg-blue-500/10 rounded-2xl flex items-center gap-4 mb-4 border border-blue-500/20 animate-pulse">
-                <img id="g-img" src="" class="w-14 h-14 rounded-xl shadow-lg border border-white/10">
+            <div id="g-sel" class="hidden p-4 bg-blue-500/10 rounded-2xl flex items-center gap-4 mb-4 border border-blue-500/20">
+                <img id="g-img" src="" class="w-12 h-12 rounded-xl">
                 <div class="flex-1 overflow-hidden">
                     <p id="g-name" class="font-black text-[11px] uppercase truncate text-blue-400"></p>
                     <p id="g-id" class="text-[9px] opacity-40 font-mono"></p>
                 </div>
-                <i class="fas fa-check-circle text-blue-500"></i>
             </div>
 
-            <div class="grid grid-cols-1 gap-4">
-                <select id="s-stat" class="w-full bg-black/20 p-4 rounded-xl outline-none border border-white/5 text-xs font-bold">
-                    <option value="Working">🟢 ÇALIŞIYOR (WORKING)</option>
-                    <option value="Maintenance">🟡 BAKIMDA (MAINTENANCE)</option>
-                    <option value="NotWorking">🔴 BOZUK (NOT WORKING)</option>
-                </select>
-                <textarea id="s-con" class="w-full bg-black/20 p-4 rounded-xl h-40 font-mono text-[10px] outline-none border border-white/5 focus:border-blue-500" placeholder="Script kodunu buraya yapıştır..."></textarea>
-            </div>
+            <select id="s-stat" class="w-full bg-black/20 p-4 rounded-xl outline-none border border-white/5 text-xs font-bold mb-4">
+                <option value="Working">🟢 WORKING</option>
+                <option value="Maintenance">🟡 MAINTENANCE</option>
+                <option value="NotWorking">🔴 NOT WORKING</option>
+            </select>
+            
+            <textarea id="s-con" class="w-full bg-black/20 p-4 rounded-xl h-40 font-mono text-[10px] outline-none border border-white/5 focus:border-blue-500" placeholder="Script içeriği (Loadstring veya herhangi bir metin)..."></textarea>
             
             <div class="flex gap-3 mt-6">
-                <button onclick="closeAdd()" class="flex-1 p-4 bg-white/5 rounded-2xl font-bold hover:bg-white/10 transition-all text-xs">İPTAL</button>
-                <button onclick="save()" class="flex-1 bg-blue-600 hover:bg-blue-500 rounded-2xl font-black transition-all shadow-lg shadow-blue-500/20 text-xs">SİSTEME KAYDET</button>
+                <button onclick="closeAdd()" class="flex-1 p-4 bg-white/5 rounded-2xl font-bold text-xs hover:bg-white/10">İPTAL</button>
+                <button onclick="save()" class="flex-1 bg-blue-600 hover:bg-blue-500 rounded-2xl font-black text-xs shadow-lg shadow-blue-500/20">KAYDET</button>
             </div>
         </div>
     </div>
 
     <script>
-        let codes = [], selGame = null, pTimer;
+        let codes = [], selGame = null, pTimer, isManual = false;
         const api = '/api/api';
 
         async function load() { 
@@ -90,17 +94,26 @@
             }
         }
 
+        function toggleManual() {
+            isManual = !isManual;
+            document.getElementById('search-box').classList.toggle('hidden', isManual);
+            document.getElementById('manual-box').classList.toggle('hidden', !isManual);
+            document.getElementById('manual-btn').innerText = isManual ? "MANUEL GİRİŞ: AÇIK" : "MANUEL GİRİŞ: KAPALI";
+            document.getElementById('manual-btn').classList.toggle('bg-green-600/20', isManual);
+            document.getElementById('manual-btn').classList.toggle('text-green-400', isManual);
+            if(isManual) document.getElementById('g-sel').classList.add('hidden');
+        }
+
         function render() {
             const q = document.getElementById('srch').value.toLowerCase();
             document.getElementById('list').innerHTML = codes.filter(c => c.gameName.toLowerCase().includes(q)).map(c => `
-                <div class="bg-[#313338] p-5 rounded-[2rem] border border-white/5 relative group transition-all" onmousedown="pStart('${c._id}')" onmouseup="pEnd()" ontouchstart="pStart('${c._id}')" ontouchend="pEnd()">
+                <div class="bg-[#313338] p-5 rounded-[2rem] border border-white/5 transition-all group" onmousedown="pStart('${c._id}')" onmouseup="pEnd()" ontouchstart="pStart('${c._id}')" ontouchend="pEnd()">
                     <div class="flex gap-4 mb-4">
-                        <img src="${c.gameThumb}" class="w-20 h-20 rounded-2xl shadow-xl">
+                        <img src="${c.gameThumb}" class="w-20 h-20 rounded-2xl shadow-xl group-hover:scale-105 transition-transform">
                         <div class="flex-1 overflow-hidden">
                             <h3 class="font-black text-xs truncate uppercase tracking-tighter">${c.gameName}</h3>
                             <div class="flex items-center gap-2 mt-2">
                                 <span class="text-[9px] font-black px-2 py-0.5 rounded status-${c.status}">${c.status}</span>
-                                <span class="text-[9px] opacity-30 font-mono">ID: ${c.gameId}</span>
                             </div>
                         </div>
                     </div>
@@ -110,39 +123,44 @@
         }
 
         async function searchRoblox(q) {
-            if(q.length < 3) { document.getElementById('g-res').innerHTML = ""; return; }
+            if(q.length < 3) return;
             try {
                 const r = await fetch(`${api}?searchGame=${encodeURIComponent(q)}`);
                 const gs = await r.json();
                 document.getElementById('g-res').innerHTML = gs.map(g => `
                     <div onclick="setG('${g.name.replace(/'/g,"")}','${g.place_id}','${g.icon}')" class="p-3 bg-white/5 rounded-xl cursor-pointer text-[10px] font-bold hover:bg-blue-600 flex items-center gap-3 transition-all border border-white/5">
-                        <img src="${g.icon}" class="w-8 h-8 rounded-lg"> 
-                        <div class="flex flex-col">
-                            <span>${g.name}</span>
-                            <span class="text-[8px] opacity-30">Place ID: ${g.place_id}</span>
-                        </div>
+                        <img src="${g.icon}" class="w-6 h-6 rounded-lg"> <span>${g.name}</span>
                     </div>
                 `).join('');
-            } catch(e) { console.error("Arama yapılamadı."); }
+            } catch(e) {}
         }
 
         function setG(name, id, icon) {
             selGame = { gameName: name, gameId: id, gameThumb: icon };
             document.getElementById('g-sel').classList.remove('hidden');
             document.getElementById('g-name').innerText = name;
-            document.getElementById('g-id').innerText = "Seçili ID: " + id;
+            document.getElementById('g-id').innerText = "ID: " + id;
             document.getElementById('g-img').src = icon;
-            document.getElementById('g-res').innerHTML = ""; // Listeyi kapat
-            document.getElementById('g-srch').value = ""; // Arama kutusunu temizle
+            document.getElementById('g-res').innerHTML = "";
         }
 
         async function save() {
-            if(!selGame) return alert("Hata: Önce bir oyun arayıp sonuçlardan seçmelisin!");
+            let payload = {};
             const content = document.getElementById('s-con').value;
-            if(!content) return alert("Hata: Script kodunu girmedin!");
+            const status = document.getElementById('s-stat').value;
+
+            if(isManual) {
+                const name = document.getElementById('m-name').value;
+                const url = document.getElementById('m-url').value;
+                if(!name || !url || !content) return alert("Hata: Tüm alanları doldur!");
+                payload = { gameName: name, gameThumb: url, gameId: "MANUAL", content, status };
+            } else {
+                if(!selGame || !content) return alert("Hata: Bir oyun seçin veya manuel modu açın!");
+                payload = { ...selGame, content, status };
+            }
             
-            const payload = { ...selGame, content, status: document.getElementById('s-stat').value };
-            const method = selGame._id ? 'PUT' : 'POST';
+            if(selGame && selGame._id) payload._id = selGame._id;
+            const method = payload._id ? 'PUT' : 'POST';
             
             await fetch(api, { method, body: JSON.stringify(payload), headers: {'Content-Type': 'application/json'} });
             location.reload();
@@ -153,8 +171,47 @@
 
         async function admAct(id) {
             const c = codes.find(x => x._id === id);
-            if(confirm(`"${c.gameName}" Scriptini Düzenle? (Vazgeç dersen SİLME menüsü gelir)`)) {
+            if(confirm(`"${c.gameName}" Düzenlensin mi? (İptal=Sil)`)) {
                 selGame = c;
+                document.getElementById('s-con').value = c.content;
+                document.getElementById('s-stat').value = c.status;
+                if(c.gameId === "MANUAL") {
+                    if(!isManual) toggleManual();
+                    document.getElementById('m-name').value = c.gameName;
+                    document.getElementById('m-url').value = c.gameThumb;
+                } else {
+                    if(isManual) toggleManual();
+                    setG(c.gameName, c.gameId, c.gameThumb);
+                }
+                showAdd();
+            } else if(confirm("Silmek istediğine emin misin?")) {
+                await fetch(`${api}?id=${id}`, { method: 'DELETE' });
+                location.reload();
+            }
+        }
+
+        async function login() {
+            const r = await fetch(`${api}?type=users`);
+            const us = await r.json();
+            const u = us.find(x => x.username === document.getElementById('u').value && x.password === document.getElementById('p').value);
+            if(u) { sessionStorage.setItem('tr_void_user', JSON.stringify(u)); location.reload(); }
+            else alert("Hata!");
+        }
+
+        function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); }
+        function showAdd() { document.getElementById('modal').classList.remove('hidden'); }
+        function closeAdd() { document.getElementById('modal').classList.add('hidden'); selGame = null; }
+        function logout() { sessionStorage.clear(); location.reload(); }
+        function copy(c, b) { 
+            navigator.clipboard.writeText(decodeURIComponent(c)); 
+            const old = b.innerText; b.innerText = "KOPYALANDI!"; setTimeout(() => b.innerText = old, 2000); 
+        }
+
+        load();
+    </script>
+</body>
+</html>
+ c;
                 document.getElementById('s-con').value = c.content;
                 document.getElementById('s-stat').value = c.status;
                 setG(c.gameName, c.gameId, c.gameThumb);
