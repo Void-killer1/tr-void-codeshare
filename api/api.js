@@ -1,52 +1,85 @@
-import { MongoClient } from "mongodb";
+const { MongoClient, ObjectId } = require("mongodb");
+const axios = require("axios");
 
-const client = new MongoClient(process.env.MONGO_URI);
-const dbName = "trvoid";
+const client = new MongoClient(process.env.MONGODB_URI);
 
-let cachedDb = null;
+module.exports = async (req, res) => {
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.setHeader("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS");
+    res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+    if (req.method === "OPTIONS") return res.status(200).end();
 
-async function connectDB() {
-  if (cachedDb) return cachedDb;
-  await client.connect();
-  cachedDb = client.db(dbName);
-  return cachedDb;
-}
+    try {
+        await client.connect();
+        const db = client.db("hasanbrawl54_db_user");
+        const codes = db.collection("codes");
+        const users = db.collection("users");
 
-export default async function handler(req, res) {
-  try {
-    const db = await connectDB();
-    const col = db.collection("scripts");
+        /* ROBLOX GAME SEARCH */
+        if (req.method === "GET" && req.query.searchGame) {
+            const q = req.query.searchGame;
 
-    if (req.method === "GET") {
-      const data = await col.find({}).toArray();
-      return res.status(200).json(data);
+            const search = await axios.get(
+                `https://games.roblox.com/v1/games/search?keyword=${encodeURIComponent(q)}&limit=10`
+            );
+
+            const games = search.data.data || [];
+            const ids = games.map(g => g.rootPlaceId).join(",");
+
+            let thumbs = {};
+            if (ids) {
+                const t = await axios.get(
+                    `https://thumbnails.roblox.com/v1/places/gameicons?placeIds=${ids}&size=150x150&format=Png`
+                );
+                t.data.data.forEach(i => thumbs[i.targetId] = i.imageUrl);
+            }
+
+            return res.json(
+                games.map(g => ({
+                    name: g.name,
+                    placeId: g.rootPlaceId,
+                    image: thumbs[g.rootPlaceId] || ""
+                }))
+            );
+        }
+
+        /* GET */
+        if (req.method === "GET") {
+            if (req.query.type === "users")
+                return res.json(await users.find({}).toArray());
+
+            return res.json(
+                await codes.find({}).sort({ createdAt: -1 }).toArray()
+            );
+        }
+
+        const body = typeof req.body === "string"
+            ? JSON.parse(req.body)
+            : req.body;
+
+        /* POST */
+        if (req.method === "POST") {
+            await codes.insertOne({ ...body, createdAt: new Date() });
+            return res.json({ ok: true });
+        }
+
+        /* PUT */
+        if (req.method === "PUT") {
+            const { _id, ...rest } = body;
+            await codes.updateOne(
+                { _id: new ObjectId(_id) },
+                { $set: rest }
+            );
+            return res.json({ ok: true });
+        }
+
+        /* DELETE */
+        if (req.method === "DELETE") {
+            await codes.deleteOne({ _id: new ObjectId(req.query.id) });
+            return res.json({ ok: true });
+        }
+
+    } catch (e) {
+        return res.status(500).json({ error: e.message });
     }
-
-    if (req.method === "POST") {
-      const { name, image, code } = req.body;
-
-      if (!name || !code) {
-        throw new Error("Eksik alan");
-      }
-
-      await col.insertOne({
-        name,
-        image,
-        code,
-        createdAt: Date.now()
-      });
-
-      return res.status(200).json({ ok: true });
-    }
-
-    res.status(405).end();
-  } catch (err) {
-    console.error("API ERROR:", err.message);
-
-    return res.status(500).json({
-      error: true,
-      message: err.message,
-      stack: err.stack
-    });
-  }
-}
+};
