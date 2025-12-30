@@ -1,196 +1,169 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>TR-VOID | CodeShare</title>
-
-<script src="https://cdn.tailwindcss.com"></script>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-
-<style>
-:root { --bg:#1e1f22; --card:#313338; --text:#dbdee1; }
-body { background:var(--bg); color:var(--text); font-family:Inter,sans-serif }
-.status-Working{color:#23a55a}
-.status-Maintenance{color:#f0b232}
-.status-NotWorking{color:#f23f43}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TR-VOID | CodeShare</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root { --db: #1e1f22; --dc: #313338; --dt: #dbdee1; --dp: #5865F2; }
+        .light-mode { --db: #f2f3f5; --dc: #ffffff; --dt: #060607; }
+        body { background: var(--db); color: var(--dt); font-family: 'Inter', sans-serif; transition: 0.3s; user-select: none; }
+        .sidebar { position: fixed; top: 0; right: -350px; width: 320px; height: 100%; background: var(--dc); z-index: 100; transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1); border-left: 1px solid rgba(0,0,0,0.2); }
+        .sidebar.open { right: 0; box-shadow: -10px 0 30px rgba(0,0,0,0.5); }
+        .status-Working { color: #23a55a; background: rgba(35, 165, 90, 0.1); }
+        .status-Maintenance { color: #f0b232; background: rgba(240, 178, 50, 0.1); }
+        .status-NotWorking { color: #f23f43; background: rgba(242, 63, 67, 0.1); }
+    </style>
 </head>
-<body>
+<body oncontextmenu="return false;">
+    <nav class="fixed top-0 w-full p-4 flex justify-between items-center z-50 px-8 bg-black/20 backdrop-blur-lg border-b border-white/5">
+        <div class="font-black text-xl italic">TR-VOID <span class="text-blue-500">.cc</span></div>
+        <div class="flex items-center gap-6">
+            <a href="https://discord.gg/SVqC6KCUnK" target="_blank" class="hover:text-blue-400"><i class="fab fa-discord text-xl"></i></a>
+            <button onclick="toggleTheme()"><i class="fas fa-moon" id="t-icon"></i></button>
+            <button onclick="toggleSidebar()" class="text-2xl">☰</button>
+        </div>
+    </nav>
 
-<nav class="fixed top-0 w-full flex justify-between items-center p-4 bg-black/20 backdrop-blur z-50">
-  <b>TR-VOID<span class="text-blue-500">.cc</span></b>
-  <button onclick="toggleSidebar()">☰</button>
-</nav>
+    <div class="sidebar p-6 pt-10" id="sidebar">
+        <button onclick="toggleSidebar()" class="mb-10 text-[10px] font-black opacity-40 hover:opacity-100 flex items-center gap-2 uppercase tracking-widest transition-all">
+            <i class="fas fa-arrow-right"></i> GERİ DÖN / KAPAT
+        </button>
 
-<!-- SIDEBAR -->
-<div id="sidebar" class="fixed right-[-320px] top-0 h-full w-[300px] bg-[#2b2d31] p-6 transition-all">
-  <input id="u" placeholder="Kullanıcı" class="w-full p-2 mb-2 bg-black/30 rounded">
-  <input id="p" placeholder="Şifre" type="password" class="w-full p-2 mb-4 bg-black/30 rounded">
-  <button onclick="login()" class="w-full bg-blue-600 p-2 rounded">Giriş</button>
-  <button onclick="showAdd()" class="w-full mt-4 bg-white/10 p-2 rounded">Yeni Script</button>
-</div>
+        <div id="login-sec">
+            <h3 class="text-[10px] font-bold text-gray-500 uppercase mb-4 tracking-widest">Giriş Yap</h3>
+            <input type="text" id="u" class="w-full bg-black/20 p-4 rounded-xl mb-2 outline-none border border-white/5 focus:border-blue-500" placeholder="Kullanıcı">
+            <input type="password" id="p" class="w-full bg-black/20 p-4 rounded-xl mb-4 outline-none border border-white/5 focus:border-blue-500" placeholder="Şifre">
+            <button onclick="login()" class="w-full bg-[#5865F2] hover:bg-[#4752c4] p-4 rounded-xl font-bold transition-all">Giriş Yap</button>
+        </div>
+        <div id="admin-sec" class="hidden space-y-4">
+            <button onclick="showAdd(null)" class="w-full p-4 bg-blue-500/10 text-blue-500 rounded-xl font-bold border border-blue-500/20">SCRIPT EKLE</button>
+            <button onclick="logout()" class="w-full p-2 text-red-500 text-[10px] font-bold opacity-30 mt-20">LOGOUT</button>
+        </div>
+    </div>
 
-<main class="pt-24 px-6 max-w-6xl mx-auto">
-  <input id="srch" oninput="render()" placeholder="Oyun ara..." class="w-full p-4 rounded-xl bg-black/30 mb-4">
-  <div id="randGames" class="grid md:grid-cols-3 gap-6 mb-8"></div>
-  <div id="list" class="grid md:grid-cols-3 gap-6"></div>
-</main>
+    <main class="pt-32 px-6 max-w-6xl mx-auto pb-20">
+        <div class="relative max-w-2xl mx-auto mb-16">
+            <i class="fas fa-search absolute left-6 top-1/2 -translate-y-1/2 text-gray-500"></i>
+            <input type="text" id="srch" oninput="render()" class="w-full bg-black/20 p-5 pl-16 rounded-2xl outline-none border border-white/5 focus:border-blue-500" placeholder="Oyun ara...">
+        </div>
+        <div id="list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+    </main>
 
-<!-- MODAL -->
-<div id="modal" class="fixed inset-0 bg-black/80 hidden items-center justify-center">
-<div class="bg-[#2b2d31] p-6 rounded-xl w-full max-w-lg">
+    <div id="modal" class="fixed inset-0 bg-black/90 hidden z-[200] flex items-center justify-center p-4 backdrop-blur-md">
+        <div class="bg-[#2b2d31] w-full max-w-lg rounded-3xl p-8 border border-white/10 shadow-2xl">
+            <input type="text" id="g-srch" oninput="searchRoblox(this.value)" class="w-full bg-black/20 p-4 rounded-xl mb-4 outline-none border border-white/5" placeholder="Oyun İsmi Girin...">
+            <div id="g-res" class="max-h-32 overflow-y-auto mb-4 space-y-1"></div>
+            
+            <div id="g-sel" class="hidden p-4 bg-blue-500/10 rounded-xl flex items-center gap-4 mb-4 border border-blue-500/20">
+                <img id="g-img" src="" class="w-14 h-14 rounded-xl">
+                <div class="flex-1">
+                    <p id="g-name" class="font-bold text-xs"></p>
+                    <p id="g-id" class="text-[9px] opacity-40"></p>
+                </div>
+            </div>
 
-<input id="g-srch" oninput="searchRobloxGames(this.value)" placeholder="Oyun/Model Ara..." class="w-full p-2 mb-2 bg-black/30 rounded">
-<div id="g-res" class="space-y-1 mb-2"></div>
+            <select id="s-stat" class="w-full bg-black/20 p-4 rounded-xl mb-4 outline-none border border-white/5">
+                <option value="Working">✅ Working</option>
+                <option value="Maintenance">🛠️ Maintenance</option>
+                <option value="NotWorking">❌ Not Working</option>
+            </select>
+            <textarea id="s-con" class="w-full bg-black/20 p-4 rounded-xl h-32 mb-6 font-mono text-[10px] outline-none" placeholder="Script..."></textarea>
+            
+            <div class="flex gap-3">
+                <button onclick="closeAdd()" class="flex-1 p-4 bg-white/5 rounded-xl font-bold hover:bg-white/10">İPTAL</button>
+                <button onclick="save()" class="flex-1 bg-blue-600 rounded-xl font-black">KAYDET</button>
+            </div>
+        </div>
+    </div>
 
-<textarea id="s-con" oninput="updatePreview()" placeholder="Script içeriği..." class="w-full h-24 p-2 bg-black/30 rounded mb-2"></textarea>
+    <script>
+        let codes = [], selGame = null, pTimer;
+        const api = '/api/api';
 
-<select id="s-stat" onchange="updatePreview()" class="w-full p-2 bg-black/30 rounded mb-2">
-<option value="Working">Working</option>
-<option value="Maintenance">Maintenance</option>
-<option value="NotWorking">NotWorking</option>
-</select>
+        async function load() { 
+            const r = await fetch(api); codes = await r.json(); render(); 
+            if(sessionStorage.getItem('tr_void_user')) {
+                document.getElementById('login-sec').classList.add('hidden');
+                document.getElementById('admin-sec').classList.remove('hidden');
+            }
+        }
 
-<!-- PREVIEW -->
-<div id="preview" class="hidden bg-[#313338] p-4 rounded mb-4">
-  <img id="pv-img" class="w-16 h-16 rounded mb-2">
-  <div id="pv-name" class="font-bold"></div>
-  <div id="pv-status" class="text-xs"></div>
-  <div id="pv-creator" class="text-xs mt-1"></div>
-  <div id="pv-players" class="text-xs mt-1"></div>
-</div>
+        function render() {
+            const q = document.getElementById('srch').value.toLowerCase();
+            document.getElementById('list').innerHTML = codes.filter(c => c.gameName.toLowerCase().includes(q)).map(c => `
+                <div class="bg-[#313338] p-5 rounded-[2rem] border border-white/5 hover:border-blue-500/30 transition-all" 
+                     onmousedown="pStart('${c._id}')" onmouseup="pEnd()" ontouchstart="pStart('${c._id}')" ontouchend="pEnd()">
+                    <div class="flex gap-4 mb-4">
+                        <img src="${c.gameThumb}" class="w-20 h-20 rounded-2xl shadow-xl">
+                        <div class="flex-1">
+                            <h3 class="font-black text-sm truncate uppercase">${c.gameName}</h3>
+                            <span class="text-[9px] font-black px-2 py-0.5 rounded status-${c.status}">${c.status}</span>
+                        </div>
+                    </div>
+                    <button onclick="copy('${encodeURIComponent(c.content)}', this)" class="w-full bg-white/5 hover:bg-blue-600 p-3 rounded-xl text-[10px] font-black transition-all">KODU KOPYALA</button>
+                </div>
+            `).join('');
+        }
 
-<button onclick="save()" class="w-full bg-blue-600 p-2 rounded">Kaydet</button>
-<button onclick="closeAdd()" class="w-full mt-2 bg-white/10 p-2 rounded">İptal</button>
+        async function searchRoblox(q) {
+            if(q.length < 3) return;
+            const r = await fetch(`${api}?searchGame=${encodeURIComponent(q)}`);
+            const gs = await r.json();
+            document.getElementById('g-res').innerHTML = gs.map(g => `
+                <div onclick="setG('${g.name.replace(/'/g,"")}','${g.place_id}','${g.icon}')" class="p-3 bg-white/5 rounded-xl cursor-pointer text-[10px] font-bold hover:bg-blue-600 flex items-center gap-3 transition-all border border-white/5">
+                    <img src="${g.icon}" class="w-8 h-8 rounded"> ${g.name}
+                </div>
+            `).join('');
+        }
 
-</div>
-</div>
+        function setG(n,i,t) {
+            selGame = { gameName:n, gameId:i, gameThumb:t };
+            document.getElementById('g-sel').classList.remove('hidden');
+            document.getElementById('g-name').innerText = n;
+            document.getElementById('g-id').innerText = "ID: " + i;
+            document.getElementById('g-img').src = t;
+            document.getElementById('g-res').innerHTML = "";
+        }
 
-<script>
-const api="/api/api";
-let codes=[], selGame=null, randGamesData=[];
+        async function save() {
+            const payload = { ...selGame, content: document.getElementById('s-con').value, status: document.getElementById('s-stat').value };
+            const method = selGame._id ? 'PUT' : 'POST';
+            await fetch(api, { method, body: JSON.stringify(payload), headers: {'Content-Type': 'application/json'} });
+            location.reload();
+        }
 
-/* ELEMENTLER */
-const list=document.getElementById("list");
-const srch=document.getElementById("srch");
-const randGamesDiv=document.getElementById("randGames");
-const modal=document.getElementById("modal");
-const sidebar=document.getElementById("sidebar");
-const gRes=document.getElementById("g-res");
-const sCon=document.getElementById("s-con");
-const sStat=document.getElementById("s-stat");
-const preview=document.getElementById("preview");
-const pvImg=document.getElementById("pv-img");
-const pvName=document.getElementById("pv-name");
-const pvStatus=document.getElementById("pv-status");
-const pvCreator=document.getElementById("pv-creator");
-const pvPlayers=document.getElementById("pv-players");
+        function pStart(id) { if(sessionStorage.getItem('tr_void_user')) pTimer = setTimeout(() => admAct(id), 1000); }
+        function pEnd() { clearTimeout(pTimer); }
 
-/* LOAD */
-async function load(){
-  codes = await (await fetch(api)).json();
-  render();
-  loadRandomGames();
-}
+        async function admAct(id) {
+            const c = codes.find(x => x._id === id);
+            if(confirm(`"${c.gameName}" Düzenlensin mi? (İptal=Sil)`)) {
+                selGame = c; document.getElementById('s-con').value = c.content; document.getElementById('s-stat').value = c.status;
+                setG(c.gameName, c.gameId, c.gameThumb); showAdd();
+            } else {
+                if(confirm("Silinsin mi?")) { await fetch(`${api}?id=${id}`, { method: 'DELETE' }); location.reload(); }
+            }
+        }
 
-/* RENDER */
-function render(){
-  const q = srch.value.toLowerCase();
-  list.innerHTML = codes
-  .filter(c => c.game.toLowerCase().includes(q))
-  .map(c => `
-  <div class="bg-[#313338] p-4 rounded-xl">
-    <b>${c.title}</b>
-    <div class="text-xs">${c.game}</div>
-    <div class="status-${c.status} text-xs">${c.status}</div>
-    <button onclick="copy('${encodeURIComponent(c.content)}')" class="w-full mt-2 bg-white/10 p-2 rounded">Kopyala</button>
-  </div>`).join("");
-}
+        async function login() {
+            const r = await fetch(`${api}?type=users`);
+            const us = await r.json();
+            const u = us.find(x => x.username === document.getElementById('u').value && x.password === document.getElementById('p').value);
+            if(u) { sessionStorage.setItem('tr_void_user', JSON.stringify(u)); location.reload(); }
+            else alert("Hata!");
+        }
 
-/* RANDOM GAMES */
-async function loadRandomGames(){
-  try{
-    const res = await fetch(`${api}?randomGames=true`);
-    randGamesData = await res.json();
-    randGamesDiv.innerHTML = randGamesData.map(g=>`
-      <div class="bg-[#313338] p-4 rounded-xl cursor-pointer" onclick="selectGame(${g.universeId})">
-        <img src="${g.thumbnail}" class="w-full rounded mb-2">
-        <b>${g.name}</b>
-        <div class="text-xs">${g.creatorName || 'Bilinmiyor'}</div>
-        <div class="text-xs">Players: ${g.playing}</div>
-      </div>`).join("");
-  }catch(e){console.error(e);}
-}
+        function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); }
+        function toggleTheme() { document.body.classList.toggle('light-mode'); }
+        function showAdd() { document.getElementById('modal').classList.remove('hidden'); }
+        function closeAdd() { document.getElementById('modal').classList.add('hidden'); selGame = null; }
+        function logout() { sessionStorage.clear(); location.reload(); }
+        function copy(c, b) { navigator.clipboard.writeText(decodeURIComponent(c)); b.innerText = "KOPYALANDI!"; setTimeout(() => b.innerText = "KODU KOPYALA", 2000); }
 
-/* ROBLOX SEARCH */
-async function searchRobloxGames(q){
-  if(q.length<3){ gRes.innerHTML=""; return; }
-  try{
-    const res = await fetch(`${api}?searchGame=${encodeURIComponent(q)}`);
-    const data = await res.json();
-    if(!Array.isArray(data)) return;
-    gRes.innerHTML = data.map(g => `
-      <div onclick="setG('${g.name.replace(/'/g,"")}','${g.universeId}','${g.image}','${g.creatorName}','${g.playing}')"
-      class="p-2 bg-white/10 rounded cursor-pointer flex items-center gap-2 hover:bg-blue-600">
-        <img src="${g.image}" class="w-8 h-8 rounded">
-        <span class="text-xs font-bold">${g.name}</span>
-      </div>`).join("");
-  }catch(e){console.error(e);}
-}
-
-/* SELECT GAME */
-function setG(name,id,img,creator,players){
-  selGame={ name, id, thumbnail:img, creator, players };
-  gRes.innerHTML="";
-  updatePreview();
-}
-
-function selectGame(universeId){
-  const g = randGamesData.find(x=>x.universeId==universeId);
-  if(!g) return;
-  selGame={ name:g.name, id:g.universeId, thumbnail:g.thumbnail, creator:g.creatorName, players:g.playing };
-  updatePreview();
-}
-
-/* PREVIEW */
-function updatePreview(){
-  if(!selGame) return;
-  preview.classList.remove("hidden");
-  pvImg.src = selGame.thumbnail;
-  pvName.innerText = selGame.name;
-  pvStatus.innerText = sStat.value;
-  pvStatus.className = `status-${sStat.value} text-xs`;
-  pvCreator.innerText = "Creator: " + (selGame.creator || "Bilinmiyor");
-  pvPlayers.innerText = "Players: " + (selGame.players || 0);
-}
-
-/* SAVE */
-async function save(){
-  if(!selGame || !sCon.value) return alert("Eksik bilgi");
-  await fetch(api,{
-    method:"POST",
-    headers:{ "Content-Type":"application/json" },
-    body:JSON.stringify({
-      game: selGame.name,
-      title: selGame.name + " Script",
-      content:sCon.value,
-      status:sStat.value,
-      author:"admin"
-    })
-  });
-  location.reload();
-}
-
-/* UI */
-function toggleSidebar(){ sidebar.style.right = sidebar.style.right==="0px" ? "-320px":"0px"; }
-function showAdd(){ modal.classList.remove("hidden"); }
-function closeAdd(){ modal.classList.add("hidden"); }
-function copy(t){ navigator.clipboard.writeText(decodeURIComponent(t)); }
-async function login(){ alert("Login hazır"); }
-
-load();
-</script>
-
+        load();
+    </script>
 </body>
 </html>
