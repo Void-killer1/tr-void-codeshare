@@ -21,10 +21,7 @@ body { background:var(--bg); color:var(--text); font-family:Inter,sans-serif }
 
 <nav class="fixed top-0 w-full flex justify-between items-center p-4 bg-black/20 backdrop-blur z-50">
   <b>TR-VOID<span class="text-blue-500">.cc</span></b>
-  <div class="flex items-center gap-2">
-    <button onclick="toggleSidebar()">☰</button>
-    <button id="err-btn" class="hidden text-xs px-2 py-1 bg-red-600 rounded" onclick="showErrorLog()">Hata Görüntüle</button>
-  </div>
+  <button onclick="toggleSidebar()">☰</button>
 </nav>
 
 <!-- SIDEBAR -->
@@ -36,7 +33,9 @@ body { background:var(--bg); color:var(--text); font-family:Inter,sans-serif }
 </div>
 
 <main class="pt-24 px-6 max-w-6xl mx-auto">
-  <input id="srch" oninput="render()" placeholder="Oyun ara..." class="w-full p-4 rounded-xl bg-black/30 mb-8">
+  <input id="srch" oninput="render()" placeholder="Oyun ara..."
+  class="w-full p-4 rounded-xl bg-black/30 mb-8">
+
   <div id="list" class="grid md:grid-cols-3 gap-6"></div>
 </main>
 
@@ -44,11 +43,18 @@ body { background:var(--bg); color:var(--text); font-family:Inter,sans-serif }
 <div id="modal" class="fixed inset-0 bg-black/80 hidden items-center justify-center">
 <div class="bg-[#2b2d31] p-6 rounded-xl w-full max-w-lg">
 
-<input id="g-srch" oninput="searchRoblox(this.value)" placeholder="Roblox oyun adı" class="w-full p-2 mb-2 bg-black/30 rounded">
+<input id="g-srch" oninput="searchRoblox(this.value)"
+placeholder="Oyun/Model ara..."
+class="w-full p-2 mb-2 bg-black/30 rounded">
+
 <div id="g-res" class="space-y-1 mb-2"></div>
 
-<textarea id="s-con" oninput="updatePreview()" placeholder="Script içeriği..." class="w-full h-24 p-2 bg-black/30 rounded mb-2"></textarea>
-<select id="s-stat" onchange="updatePreview()" class="w-full p-2 bg-black/30 rounded mb-2">
+<textarea id="s-con" oninput="updatePreview()"
+placeholder="Script içeriği..."
+class="w-full h-24 p-2 bg-black/30 rounded mb-2"></textarea>
+
+<select id="s-stat" onchange="updatePreview()"
+class="w-full p-2 bg-black/30 rounded mb-2">
 <option value="Working">Working</option>
 <option value="Maintenance">Maintenance</option>
 <option value="NotWorking">NotWorking</option>
@@ -56,7 +62,7 @@ body { background:var(--bg); color:var(--text); font-family:Inter,sans-serif }
 
 <!-- PREVIEW -->
 <div id="preview" class="hidden bg-[#313338] p-4 rounded mb-4">
-  <img id="pv-img" class="w-16 h-16 rounded mb-2" onerror="thumbError(this)">
+  <img id="pv-img" class="w-16 h-16 rounded mb-2">
   <div id="pv-name" class="font-bold"></div>
   <div id="pv-status" class="text-xs"></div>
 </div>
@@ -69,7 +75,7 @@ body { background:var(--bg); color:var(--text); font-family:Inter,sans-serif }
 
 <script>
 const api="/api/api";
-let codes=[], selGame=null, errors=[];
+let codes=[], selGame=null;
 
 /* ELEMENTLER */
 const list=document.getElementById("list");
@@ -83,17 +89,15 @@ const preview=document.getElementById("preview");
 const pvImg=document.getElementById("pv-img");
 const pvName=document.getElementById("pv-name");
 const pvStatus=document.getElementById("pv-status");
-const errBtn=document.getElementById("err-btn");
 
 /* LOAD */
 async function load(){
-  try{
+  try {
     codes = await (await fetch(api)).json();
-    render();
-  }catch(e){
-    errors.push(e.message);
-    if(sessionStorage.getItem("tr_void_user")) errBtn.classList.remove("hidden");
+  } catch(e){
+    alert("API Hatası: "+e.message);
   }
+  render();
 }
 
 /* RENDER */
@@ -115,17 +119,18 @@ function render(){
 /* ROBLOX SEARCH */
 async function searchRoblox(q){
   if(q.length<3){ gRes.innerHTML=""; return; }
-  try{
+  try {
     const games = await (await fetch(`${api}?searchGame=${encodeURIComponent(q)}`)).json();
+
     gRes.innerHTML = games.map(g => `
-      <div onclick="setG('${g.name.replace(/'/g,"")}','${g.placeId}','${g.image}')"
+      <div onclick="setG('${g.name.replace(/'/g,"")}','${g.rootPlaceId}','https://tr.rbxcdn.com/${g.rootPlaceId}/150/150/Image/Png')"
       class="p-2 bg-white/10 rounded cursor-pointer flex items-center gap-2 hover:bg-blue-600">
-        <img src="${g.image}" class="w-8 h-8 rounded">
+        <img src="https://tr.rbxcdn.com/${g.rootPlaceId}/150/150/Image/Png" class="w-8 h-8 rounded">
         <span class="text-xs font-bold">${g.name}</span>
       </div>`).join("");
-  }catch(e){
-    errors.push("Roblox arama hatası: "+e.message);
-    if(sessionStorage.getItem("tr_void_user")) errBtn.classList.remove("hidden");
+
+  } catch(e){
+    gRes.innerHTML = `<div class="text-red-500">❌ API Hatası: ${e.message}</div>`;
   }
 }
 
@@ -146,42 +151,30 @@ function updatePreview(){
   pvStatus.className = `status-${sStat.value} text-xs`;
 }
 
-/* THUMB ERROR */
-function thumbError(img){
-  img.src='https://tr.rbxcdn.com/7b3b0c44e7f8e3c9d0b6e6e5b3d8a9e4/150/150/Image/Png';
-  errors.push("Görsel yüklenemedi: "+img.src);
-  if(sessionStorage.getItem("tr_void_user")) errBtn.classList.remove("hidden");
-}
-
 /* SAVE */
 async function save(){
   if(!selGame || !sCon.value) return alert("Eksik bilgi");
-  try{
-    await fetch(api,{
-      method:"POST",
-      headers:{ "Content-Type":"application/json" },
-      body:JSON.stringify({ ...selGame, content:sCon.value, status:sStat.value })
-    });
-    location.reload();
-  }catch(e){
-    errors.push("Kaydetme hatası: "+e.message);
-    if(sessionStorage.getItem("tr_void_user")) errBtn.classList.remove("hidden");
-  }
+  await fetch(api,{
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body:JSON.stringify({
+      ...selGame,
+      content:sCon.value,
+      status:sStat.value
+    })
+  });
+  location.reload();
 }
 
 /* UI */
 function toggleSidebar(){ sidebar.style.right = sidebar.style.right==="0px" ? "-320px":"0px"; }
 function showAdd(){ modal.classList.remove("hidden"); }
-function closeAdd(){ modal.classList.add("hidden"); selGame=null; }
+function closeAdd(){ modal.classList.add("hidden"); }
 function copy(t){ navigator.clipboard.writeText(decodeURIComponent(t)); }
-async function login(){ sessionStorage.setItem("tr_void_user","admin"); errBtn.classList.remove("hidden"); alert("Admin giriş yapıldı"); }
-
-/* ERROR LOG */
-function showErrorLog(){
-  alert(errors.join("\n"));
-}
+async function login(){ alert("Login hazır, DB tarafı çalışıyor"); }
 
 load();
 </script>
+
 </body>
 </html>
