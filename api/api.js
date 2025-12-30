@@ -18,16 +18,11 @@ module.exports = async (req, res) => {
 
         if (req.method === "GET") {
             const { type, searchGame } = req.query;
-            
-            // SENİN RENDER API'Nİ KULLANAN KISIM
             if (searchGame) {
                 try {
-                    const renderUrl = `https://roblox-game-search.onrender.com/search?query=${encodeURIComponent(searchGame)}&limit=5`;
-                    const response = await axios.get(renderUrl, { timeout: 7000 });
-                    return res.status(200).json(response.data.games || []);
-                } catch (err) {
-                    return res.status(200).json([]);
-                }
+                    const r = await axios.get(`https://roblox-game-search.onrender.com/search?query=${encodeURIComponent(searchGame)}&limit=5`, { timeout: 6000 });
+                    return res.status(200).json(r.data.games || []);
+                } catch (e) { return res.status(200).json([]); }
             }
             const data = (type === "users") ? await usersColl.find({}).toArray() : await codesColl.find({}).sort({createdAt: -1}).toArray();
             return res.status(200).json(data);
@@ -48,7 +43,5 @@ module.exports = async (req, res) => {
             await codesColl.deleteOne({ _id: new ObjectId(req.query.id) });
             return res.status(200).json({ msg: "Deleted" });
         }
-    } catch (e) {
-        return res.status(500).json({ error: e.message });
-    }
+    } catch (e) { return res.status(500).json({ error: e.message }); }
 };
