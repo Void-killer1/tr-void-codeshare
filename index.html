@@ -10,46 +10,52 @@
         :root { --db: #1e1f22; --dc: #313338; --dt: #dbdee1; --dp: #5865F2; }
         .light-mode { --db: #f2f3f5; --dc: #ffffff; --dt: #060607; }
         body { background: var(--db); color: var(--dt); font-family: 'Inter', sans-serif; transition: 0.3s; user-select: none; }
-        .sidebar { position: fixed; top: 0; right: -350px; width: 320px; height: 100%; background: var(--dc); z-index: 100; transition: 0.4s; border-left: 1px solid rgba(0,0,0,0.1); }
+        .sidebar { position: fixed; top: 0; right: -350px; width: 320px; height: 100%; background: var(--dc); z-index: 100; transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1); border-left: 1px solid rgba(0,0,0,0.1); }
         .sidebar.open { right: 0; }
         .status-Working { color: #23a55a; background: rgba(35, 165, 90, 0.1); }
         .status-Maintenance { color: #f0b232; background: rgba(240, 178, 50, 0.1); }
         .status-NotWorking { color: #f23f43; background: rgba(242, 63, 67, 0.1); }
+        .glass { background: var(--dc); border: 1px solid rgba(255,255,255,0.05); }
     </style>
 </head>
 <body oncontextmenu="return false;">
-    <nav class="fixed top-0 w-full p-4 flex justify-between items-center z-50 px-8 bg-black/10 backdrop-blur-md">
-        <div class="font-black text-xl tracking-tighter italic">TR-VOID <span class="text-blue-500">.cc</span></div>
+    <nav class="fixed top-0 w-full p-4 flex justify-between items-center z-50 px-8 bg-black/20 backdrop-blur-lg">
+        <div class="font-black text-xl italic tracking-tighter">TR-VOID <span class="text-blue-500">SCRIPTS</span></div>
         <div class="flex items-center gap-6">
-            <a href="https://discord.gg/SVqC6KCUnK" target="_blank" class="hover:text-blue-400"><i class="fab fa-discord"></i></a>
-            <button onclick="toggleTheme()"><i class="fas fa-moon" id="t-icon"></i></button>
+            <a href="https://discord.gg/SVqC6KCUnK" target="_blank" class="hover:text-blue-400 transition-all"><i class="fab fa-discord text-xl"></i></a>
+            <button onclick="toggleTheme()" class="text-lg"><i class="fas fa-moon" id="t-icon"></i></button>
             <button onclick="toggleSidebar()" class="text-2xl">☰</button>
         </div>
     </nav>
 
     <div class="sidebar p-6 pt-10" id="sidebar">
-        <button onclick="toggleSidebar()" class="mb-8 text-xs font-bold opacity-50 hover:opacity-100 flex items-center gap-2">
-            <i class="fas fa-arrow-right"></i> GERİ DÖN (KAPAT)
+        <button onclick="toggleSidebar()" class="mb-10 text-[10px] font-black opacity-40 hover:opacity-100 flex items-center gap-2 uppercase tracking-widest">
+            <i class="fas fa-arrow-right text-xs"></i> Geri Dön / Kapat
         </button>
+
         <div id="login-sec">
-            <input type="text" id="u" class="w-full bg-black/20 p-4 rounded-xl mb-2 outline-none border border-white/5" placeholder="Kullanıcı">
-            <input type="password" id="p" class="w-full bg-black/20 p-4 rounded-xl mb-4 outline-none border border-white/5" placeholder="Şifre">
-            <button onclick="login()" class="w-full bg-[#5865F2] p-4 rounded-xl font-bold">Giriş Yap</button>
+            <h3 class="text-xs font-bold text-gray-500 uppercase mb-4 tracking-widest">Admin Login</h3>
+            <input type="text" id="u" class="w-full bg-black/20 p-4 rounded-xl mb-2 outline-none border border-white/5" placeholder="Username">
+            <input type="password" id="p" class="w-full bg-black/20 p-4 rounded-xl mb-4 outline-none border border-white/5" placeholder="Password">
+            <button onclick="login()" class="w-full bg-[#5865F2] hover:bg-[#4752c4] p-4 rounded-xl font-bold transition-all">Giriş Yap</button>
         </div>
         <div id="admin-sec" class="hidden space-y-4">
-            <button onclick="showAdd(null)" class="w-full p-4 bg-green-500/10 text-green-500 rounded-xl font-bold border border-green-500/20 text-sm">YENİ SCRIPT EKLE</button>
-            <button onclick="logout()" class="w-full p-4 text-red-500 text-[10px] font-bold opacity-50">OTURUMU KAPAT</button>
+            <button onclick="showAdd(null)" class="w-full p-4 bg-blue-500/10 text-blue-500 rounded-xl font-bold border border-blue-500/20">SCRIPT EKLE</button>
+            <button onclick="logout()" class="w-full p-2 text-red-500 text-[10px] font-bold opacity-30 mt-20">LOGOUT</button>
         </div>
     </div>
 
-    <main class="pt-28 px-6 max-w-5xl mx-auto">
-        <input type="text" id="srch" oninput="render()" class="w-full bg-black/20 p-5 rounded-2xl outline-none border border-white/5 mb-10" placeholder="Script veya oyun ara...">
-        <div id="list" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+    <main class="pt-28 px-6 max-w-6xl mx-auto">
+        <div class="relative max-w-2xl mx-auto mb-12">
+            <i class="fas fa-search absolute left-5 top-1/2 -translate-y-1/2 text-gray-500"></i>
+            <input type="text" id="srch" oninput="render()" class="w-full bg-black/20 p-5 pl-14 rounded-2xl outline-none border border-white/5 focus:border-blue-500" placeholder="Oyun veya script ara...">
+        </div>
+        <div id="list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
     </main>
 
-    <div id="modal" class="fixed inset-0 bg-black/90 hidden z-[200] flex items-center justify-center p-4">
-        <div class="bg-[#313338] w-full max-w-lg rounded-3xl p-8 border border-white/10">
-            <input type="text" id="g-srch" oninput="searchRoblox(this.value)" class="w-full bg-black/20 p-4 rounded-xl mb-4 outline-none" placeholder="Oyun Ara...">
+    <div id="modal" class="fixed inset-0 bg-black/90 hidden z-[200] flex items-center justify-center p-4 backdrop-blur-md">
+        <div class="bg-[#2b2d31] w-full max-w-lg rounded-3xl p-8 border border-white/10 shadow-2xl">
+            <input type="text" id="g-srch" oninput="searchRoblox(this.value)" class="w-full bg-black/20 p-4 rounded-xl mb-4 outline-none" placeholder="Roblox Oyun Adı...">
             <div id="g-res" class="max-h-32 overflow-y-auto mb-4 space-y-1"></div>
             <div id="g-sel" class="hidden p-3 bg-blue-500/10 rounded-xl flex items-center gap-4 mb-4 border border-blue-500/20">
                 <img id="g-img" src="" class="w-12 h-12 rounded-lg">
@@ -58,9 +64,9 @@
             <select id="s-stat" class="w-full bg-black/20 p-4 rounded-xl mb-4 outline-none">
                 <option value="Working">✅ Çalışıyor</option>
                 <option value="Maintenance">🛠️ Bakımda</option>
-                <option value="NotWorking">❌ Çalışmıyor</option>
+                <option value="NotWorking">❌ Bozuk</option>
             </select>
-            <textarea id="s-con" class="w-full bg-black/20 p-4 rounded-xl h-32 mb-6 font-mono text-xs outline-none" placeholder="Script Kodu..."></textarea>
+            <textarea id="s-con" class="w-full bg-black/20 p-4 rounded-xl h-32 mb-6 font-mono text-[10px] outline-none" placeholder="loadstring..."></textarea>
             <div class="flex gap-2">
                 <button onclick="closeAdd()" class="flex-1 p-4 bg-white/5 rounded-xl font-bold">İPTAL</button>
                 <button onclick="save()" class="flex-1 bg-blue-600 rounded-xl font-bold">KAYDET</button>
@@ -83,26 +89,26 @@
         function render() {
             const q = document.getElementById('srch').value.toLowerCase();
             document.getElementById('list').innerHTML = codes.filter(c => c.gameName.toLowerCase().includes(q)).map(c => `
-                <div class="bg-[#313338] p-5 rounded-3xl border border-white/5" 
+                <div class="bg-[#313338] p-5 rounded-3xl border border-white/5 hover:border-blue-500/30 transition-all cursor-pointer" 
                      onmousedown="pStart('${c._id}')" onmouseup="pEnd()" ontouchstart="pStart('${c._id}')" ontouchend="pEnd()">
                     <div class="flex gap-4 mb-4">
-                        <img src="${c.gameThumb}" class="w-16 h-16 rounded-2xl">
+                        <img src="${c.gameThumb}" class="w-16 h-16 rounded-2xl shadow-lg">
                         <div class="flex-1">
-                            <h3 class="font-bold text-sm">${c.gameName}</h3>
-                            <span class="text-[10px] font-bold px-2 py-1 rounded status-${c.status}">${c.status}</span>
+                            <h3 class="font-bold text-sm truncate">${c.gameName}</h3>
+                            <span class="text-[9px] font-bold px-2 py-1 rounded status-${c.status}">${c.status}</span>
                         </div>
                     </div>
-                    <button onclick="copy('${encodeURIComponent(c.content)}', this)" class="w-full bg-white/5 p-3 rounded-xl text-xs font-bold hover:bg-white/10 transition-all">KODU KOPYALA</button>
+                    <button onclick="copy('${encodeURIComponent(c.content)}', this)" class="w-full bg-white/5 p-3 rounded-xl text-xs font-bold hover:bg-white/10">KODU KOPYALA</button>
                 </div>
             `).join('');
         }
 
         async function searchRoblox(q) {
             if(q.length < 3) return;
-            const r = await fetch(`${api}?searchGame=${q}`);
+            const r = await fetch(`${api}?searchGame=${encodeURIComponent(q)}`);
             const gs = await r.json();
             document.getElementById('g-res').innerHTML = gs.map(g => `
-                <div onclick="setG('${g.name}','${g.placeId}','${g.image}')" class="p-3 bg-white/5 rounded-xl cursor-pointer text-xs font-bold hover:bg-blue-600">${g.name}</div>
+                <div onclick="setG('${g.name.replace(/'/g,"")}','${g.placeId}','${g.image}')" class="p-3 bg-white/5 rounded-xl cursor-pointer text-xs hover:bg-blue-600 transition-all">${g.name}</div>
             `).join('');
         }
 
@@ -117,23 +123,20 @@
         async function save() {
             const payload = { ...selGame, content: document.getElementById('s-con').value, status: document.getElementById('s-stat').value };
             const method = selGame._id ? 'PUT' : 'POST';
-            await fetch(api, { method, body: JSON.stringify(payload) });
+            await fetch(api, { method, body: JSON.stringify(payload), headers: {'Content-Type': 'application/json'} });
             location.reload();
         }
 
-        function pStart(id) { if(sessionStorage.getItem('tr_void_user')) pTimer = setTimeout(() => admAct(id), 800); }
+        function pStart(id) { if(sessionStorage.getItem('tr_void_user')) pTimer = setTimeout(() => admAct(id), 1000); }
         function pEnd() { clearTimeout(pTimer); }
 
         async function admAct(id) {
             const c = codes.find(x => x._id === id);
-            if(confirm(`"${c.gameName}" scriptini:\nTAMAM -> DÜZENLE\nİPTAL -> SİL`)) {
-                selGame = c;
-                document.getElementById('s-con').value = c.content;
-                document.getElementById('s-stat').value = c.status;
-                setG(c.gameName, c.gameId, c.gameThumb);
-                showAdd();
+            if(confirm(`"${c.gameName}" Düzenlensin mi? (İptal=Sil)`)) {
+                selGame = c; document.getElementById('s-con').value = c.content; document.getElementById('s-stat').value = c.status;
+                setG(c.gameName, c.gameId, c.gameThumb); showAdd();
             } else {
-                if(confirm("Emin misin?")) { await fetch(`${api}?id=${id}`, { method: 'DELETE' }); location.reload(); }
+                if(confirm("Silinsin mi?")) { await fetch(`${api}?id=${id}`, { method: 'DELETE' }); location.reload(); }
             }
         }
 
